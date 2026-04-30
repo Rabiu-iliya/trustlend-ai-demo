@@ -826,6 +826,7 @@ const Index = () => {
       <DemoSection onAnalyzed={setResult} />
       <Dashboard score={result?.score ?? 82} bonus={repaidBonus} />
       <LoanSection onApproved={() => setTimeout(() => setRepaidBonus(5), 600)} />
+      <ConfidentialCompute />
       <Privacy />
       <Footer />
     </div>
