@@ -8,8 +8,9 @@ import { useReveal } from "@/hooks/use-reveal";
 import {
   Brain, Shield, Coins, BadgeCheck, ArrowRight, Sparkles, Lock,
   TrendingUp, CheckCircle2, Loader2, Wallet, Activity, Users, AlertTriangle, Zap,
-  Globe, Fingerprint, LineChart
+  Globe, Fingerprint, LineChart, ShieldCheck, Cpu, KeyRound
 } from "lucide-react";
+import { processInTEE, type TEEResult } from "@/lib/noxTEE";
 
 const scrollTo = (id: string) => {
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
@@ -89,6 +90,7 @@ const Nav = () => {
             { id: "demo", label: "Demo" },
             { id: "dashboard", label: "Dashboard" },
             { id: "loan", label: "Loan" },
+            { id: "confidential", label: "TEE" },
             { id: "privacy", label: "Privacy" },
           ].map((l) => (
             <button
@@ -242,7 +244,7 @@ const Problem = () => {
 };
 
 /* ------------------------ Demo ------------------------ */
-type AnalysisResult = { score: number; risk: string; eligible: number };
+type AnalysisResult = { score: number; risk: string; eligible: number; attestation?: TEEResult["attestation"] };
 
 const DemoSection = ({ onAnalyzed }: { onAnalyzed: (r: AnalysisResult) => void }) => {
   const [form, setForm] = useState({ name: "Amina", income: "450", activity: "Small grocery shop, 3 years" });
@@ -251,10 +253,10 @@ const DemoSection = ({ onAnalyzed }: { onAnalyzed: (r: AnalysisResult) => void }
   const [stepIdx, setStepIdx] = useState(0);
 
   const steps = [
-    "Fetching encrypted data…",
+    "Encrypting inputs on device…",
+    "Sealing data inside Nox TEE enclave…",
     "Running confidential AI model…",
-    "Computing trust score…",
-    "Finalizing reputation profile…",
+    "Generating attestation & trust score…",
   ];
 
   const breakdown = [
@@ -264,21 +266,29 @@ const DemoSection = ({ onAnalyzed }: { onAnalyzed: (r: AnalysisResult) => void }
     { label: "Risk Signals", value: 25, color: "from-primary to-accent" },
   ];
 
-  const analyze = () => {
+  const analyze = async () => {
     setLoading(true);
     setResult(null);
     setStepIdx(0);
     const stepInterval = setInterval(() => {
       setStepIdx((i) => Math.min(i + 1, steps.length - 1));
     }, 550);
-    setTimeout(() => {
-      clearInterval(stepInterval);
-      const r = { score: 82, risk: "Low", eligible: 500 };
-      setResult(r);
-      onAnalyzed(r);
-      setLoading(false);
-      toast.success("AI analysis complete", { description: "Trust score generated confidentially." });
-    }, 2400);
+    // Nox Protocol TEE confidential compute (simulated)
+    const [tee] = await Promise.all([
+      processInTEE(form),
+      new Promise((r) => setTimeout(r, 2400)),
+    ]);
+    clearInterval(stepInterval);
+    const r: AnalysisResult = {
+      score: tee.trustScore,
+      risk: tee.risk,
+      eligible: 500,
+      attestation: tee.attestation,
+    };
+    setResult(r);
+    onAnalyzed(r);
+    setLoading(false);
+    toast.success("AI analysis complete", { description: "Trust score generated inside Nox TEE." });
   };
 
   return (
@@ -399,6 +409,25 @@ const DemoSection = ({ onAnalyzed }: { onAnalyzed: (r: AnalysisResult) => void }
                     </div>
                   </div>
 
+                  {/* Nox TEE attestation badge */}
+                  <div className="rounded-xl border border-primary-glow/30 bg-primary/5 p-3 flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-lg bg-gradient-primary flex items-center justify-center shrink-0 shadow-glow">
+                      <ShieldCheck className="h-4 w-4 text-primary-foreground" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold flex items-center gap-1.5">
+                        🔒 Processed in TEE <span className="text-primary-glow">· Nox Protocol</span>
+                      </p>
+                      <p className="text-[10px] text-muted-foreground font-mono truncate">
+                        enclave {result.attestation?.enclave} · att {result.attestation?.hash}
+                      </p>
+                    </div>
+                    <span className="text-[10px] rounded-full bg-success/15 text-success px-2 py-0.5 shrink-0">Verified</span>
+                  </div>
+
+                  <p className="text-[11px] text-muted-foreground italic text-center">
+                    This score was generated using privacy-preserving AI inside a confidential compute environment.
+                  </p>
                   <div className="rounded-xl border border-border p-4 flex items-center justify-between">
                     <div>
                       <p className="text-xs text-muted-foreground">Loan Eligible</p>
@@ -427,8 +456,7 @@ const DemoSection = ({ onAnalyzed }: { onAnalyzed: (r: AnalysisResult) => void }
                         </div>
                       </div>
                     ))}
-                  </div>
-
+              </div>
                   <Button onClick={() => scrollTo("dashboard")} variant="outline" className="w-full glass border-border group">
                     View Dashboard <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                   </Button>
@@ -480,6 +508,10 @@ const Dashboard = ({ score, bonus }: { score: number; bonus: number }) => {
                   <Counter to={displayScore} />
                 </p>
                 <p className="text-xs text-muted-foreground mt-2">/ 100</p>
+              </div>
+              <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-primary-glow/30 bg-primary/5 px-2.5 py-1 text-[10px] font-medium">
+                <ShieldCheck className="h-3 w-3 text-primary-glow" />
+                🔒 Processed in TEE · Nox Protocol
               </div>
               <div className="mt-4">
                 <div className="flex justify-between text-xs mb-1.5">
@@ -643,6 +675,74 @@ const LoanSection = ({ onApproved }: { onApproved: () => void }) => {
 };
 
 /* ------------------------ Privacy ------------------------ */
+/* ------------------------ Confidential Compute (Nox TEE) ------------------------ */
+const ConfidentialCompute = () => {
+  const flow = [
+    { icon: Users, title: "User", desc: "Submits application" },
+    { icon: KeyRound, title: "Encrypted Data", desc: "Sealed on-device" },
+    { icon: Cpu, title: "Nox TEE", desc: "Confidential enclave" },
+    { icon: Brain, title: "AI Scoring", desc: "Runs on encrypted data" },
+    { icon: BadgeCheck, title: "Result", desc: "Score + attestation" },
+  ];
+  return (
+    <section id="confidential" className="py-28 relative">
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-accent/5 to-transparent pointer-events-none" />
+      <div className="container relative">
+        <Reveal className="text-center max-w-2xl mx-auto mb-12">
+          <p className="eyebrow mb-4 justify-center">Powered by Nox Protocol</p>
+          <div className="inline-flex h-14 w-14 rounded-2xl bg-gradient-primary shadow-glow items-center justify-center mb-5 animate-pulse-glow">
+            <ShieldCheck className="h-6 w-6 text-primary-foreground" />
+          </div>
+          <h2 className="text-4xl md:text-6xl font-bold tracking-tight mb-4">
+            Powered by <span className="text-gradient">Confidential Compute</span>
+          </h2>
+          <p className="text-muted-foreground text-lg">
+            TrustLend AI uses <span className="text-foreground font-medium">Nox Protocol's Trusted Execution Environment (TEE)</span> to
+            securely process borrower data without exposing sensitive information.
+          </p>
+        </Reveal>
+
+        <Reveal delay={150}>
+          <div className="max-w-6xl mx-auto gradient-border p-[1px]">
+            <div className="bg-card/80 backdrop-blur-xl rounded-[calc(var(--radius)-1px)] p-6 md:p-10">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-2 relative">
+                {flow.map((f, i) => (
+                  <div key={f.title} className="relative">
+                    <div className="rounded-xl bg-secondary/40 border border-border p-4 md:p-5 h-full hover:border-primary-glow/40 hover:-translate-y-1 transition-all text-center">
+                      <div className="h-10 w-10 mx-auto rounded-lg bg-gradient-primary/20 border border-primary-glow/30 flex items-center justify-center mb-2">
+                        <f.icon className="h-5 w-5 text-primary-glow" />
+                      </div>
+                      <p className="font-semibold text-sm">{f.title}</p>
+                      <p className="text-[11px] text-muted-foreground mt-1">{f.desc}</p>
+                    </div>
+                    {i < flow.length - 1 && (
+                      <ArrowRight className="hidden md:block absolute top-1/2 -right-2 -translate-y-1/2 h-4 w-4 text-primary-glow/60 z-10" />
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-3 mt-6">
+                {[
+                  { icon: Lock, title: "Sealed Inputs", desc: "Income & identity never leave the enclave in plaintext." },
+                  { icon: Cpu, title: "Remote Attestation", desc: "Every score ships with a verifiable TEE attestation." },
+                  { icon: ShieldCheck, title: "Zero Leakage", desc: "Operators, validators and AI host see only the result." },
+                ].map((f) => (
+                  <div key={f.title} className="rounded-xl border border-border bg-secondary/30 p-4">
+                    <f.icon className="h-4 w-4 text-primary-glow mb-2" />
+                    <p className="font-semibold text-sm">{f.title}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{f.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  );
+};
+
 const Privacy = () => (
   <section id="privacy" className="py-28 relative overflow-hidden">
     <div className="absolute inset-0 grid-bg opacity-30" />
@@ -726,6 +826,7 @@ const Index = () => {
       <DemoSection onAnalyzed={setResult} />
       <Dashboard score={result?.score ?? 82} bonus={repaidBonus} />
       <LoanSection onApproved={() => setTimeout(() => setRepaidBonus(5), 600)} />
+      <ConfidentialCompute />
       <Privacy />
       <Footer />
     </div>
