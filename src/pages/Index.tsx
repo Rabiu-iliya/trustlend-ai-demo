@@ -90,6 +90,7 @@ const Nav = () => {
             { id: "demo", label: "Demo" },
             { id: "dashboard", label: "Dashboard" },
             { id: "loan", label: "Loan" },
+            { id: "confidential", label: "TEE" },
             { id: "privacy", label: "Privacy" },
           ].map((l) => (
             <button
