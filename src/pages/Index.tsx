@@ -408,6 +408,25 @@ const DemoSection = ({ onAnalyzed }: { onAnalyzed: (r: AnalysisResult) => void }
                     </div>
                   </div>
 
+                  {/* Nox TEE attestation badge */}
+                  <div className="rounded-xl border border-primary-glow/30 bg-primary/5 p-3 flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-lg bg-gradient-primary flex items-center justify-center shrink-0 shadow-glow">
+                      <ShieldCheck className="h-4 w-4 text-primary-foreground" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold flex items-center gap-1.5">
+                        🔒 Processed in TEE <span className="text-primary-glow">· Nox Protocol</span>
+                      </p>
+                      <p className="text-[10px] text-muted-foreground font-mono truncate">
+                        enclave {result.attestation?.enclave} · att {result.attestation?.hash}
+                      </p>
+                    </div>
+                    <span className="text-[10px] rounded-full bg-success/15 text-success px-2 py-0.5 shrink-0">Verified</span>
+                  </div>
+
+                  <p className="text-[11px] text-muted-foreground italic text-center">
+                    This score was generated using privacy-preserving AI inside a confidential compute environment.
+                  </p>
                   <div className="rounded-xl border border-border p-4 flex items-center justify-between">
                     <div>
                       <p className="text-xs text-muted-foreground">Loan Eligible</p>
