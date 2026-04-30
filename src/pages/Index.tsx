@@ -8,8 +8,9 @@ import { useReveal } from "@/hooks/use-reveal";
 import {
   Brain, Shield, Coins, BadgeCheck, ArrowRight, Sparkles, Lock,
   TrendingUp, CheckCircle2, Loader2, Wallet, Activity, Users, AlertTriangle, Zap,
-  Globe, Fingerprint, LineChart
+  Globe, Fingerprint, LineChart, ShieldCheck, Cpu, KeyRound
 } from "lucide-react";
+import { processInTEE, type TEEResult } from "@/lib/noxTEE";
 
 const scrollTo = (id: string) => {
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
