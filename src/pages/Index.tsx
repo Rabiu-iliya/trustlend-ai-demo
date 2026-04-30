@@ -243,7 +243,7 @@ const Problem = () => {
 };
 
 /* ------------------------ Demo ------------------------ */
-type AnalysisResult = { score: number; risk: string; eligible: number };
+type AnalysisResult = { score: number; risk: string; eligible: number; attestation?: TEEResult["attestation"] };
 
 const DemoSection = ({ onAnalyzed }: { onAnalyzed: (r: AnalysisResult) => void }) => {
   const [form, setForm] = useState({ name: "Amina", income: "450", activity: "Small grocery shop, 3 years" });
@@ -252,10 +252,10 @@ const DemoSection = ({ onAnalyzed }: { onAnalyzed: (r: AnalysisResult) => void }
   const [stepIdx, setStepIdx] = useState(0);
 
   const steps = [
-    "Fetching encrypted data…",
+    "Encrypting inputs on device…",
+    "Sealing data inside Nox TEE enclave…",
     "Running confidential AI model…",
-    "Computing trust score…",
-    "Finalizing reputation profile…",
+    "Generating attestation & trust score…",
   ];
 
   const breakdown = [
@@ -265,21 +265,29 @@ const DemoSection = ({ onAnalyzed }: { onAnalyzed: (r: AnalysisResult) => void }
     { label: "Risk Signals", value: 25, color: "from-primary to-accent" },
   ];
 
-  const analyze = () => {
+  const analyze = async () => {
     setLoading(true);
     setResult(null);
     setStepIdx(0);
     const stepInterval = setInterval(() => {
       setStepIdx((i) => Math.min(i + 1, steps.length - 1));
     }, 550);
-    setTimeout(() => {
-      clearInterval(stepInterval);
-      const r = { score: 82, risk: "Low", eligible: 500 };
-      setResult(r);
-      onAnalyzed(r);
-      setLoading(false);
-      toast.success("AI analysis complete", { description: "Trust score generated confidentially." });
-    }, 2400);
+    // Nox Protocol TEE confidential compute (simulated)
+    const [tee] = await Promise.all([
+      processInTEE(form),
+      new Promise((r) => setTimeout(r, 2400)),
+    ]);
+    clearInterval(stepInterval);
+    const r: AnalysisResult = {
+      score: tee.trustScore,
+      risk: tee.risk,
+      eligible: 500,
+      attestation: tee.attestation,
+    };
+    setResult(r);
+    onAnalyzed(r);
+    setLoading(false);
+    toast.success("AI analysis complete", { description: "Trust score generated inside Nox TEE." });
   };
 
   return (
