@@ -674,6 +674,74 @@ const LoanSection = ({ onApproved }: { onApproved: () => void }) => {
 };
 
 /* ------------------------ Privacy ------------------------ */
+/* ------------------------ Confidential Compute (Nox TEE) ------------------------ */
+const ConfidentialCompute = () => {
+  const flow = [
+    { icon: Users, title: "User", desc: "Submits application" },
+    { icon: KeyRound, title: "Encrypted Data", desc: "Sealed on-device" },
+    { icon: Cpu, title: "Nox TEE", desc: "Confidential enclave" },
+    { icon: Brain, title: "AI Scoring", desc: "Runs on encrypted data" },
+    { icon: BadgeCheck, title: "Result", desc: "Score + attestation" },
+  ];
+  return (
+    <section id="confidential" className="py-28 relative">
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-accent/5 to-transparent pointer-events-none" />
+      <div className="container relative">
+        <Reveal className="text-center max-w-2xl mx-auto mb-12">
+          <p className="eyebrow mb-4 justify-center">Powered by Nox Protocol</p>
+          <div className="inline-flex h-14 w-14 rounded-2xl bg-gradient-primary shadow-glow items-center justify-center mb-5 animate-pulse-glow">
+            <ShieldCheck className="h-6 w-6 text-primary-foreground" />
+          </div>
+          <h2 className="text-4xl md:text-6xl font-bold tracking-tight mb-4">
+            Powered by <span className="text-gradient">Confidential Compute</span>
+          </h2>
+          <p className="text-muted-foreground text-lg">
+            TrustLend AI uses <span className="text-foreground font-medium">Nox Protocol's Trusted Execution Environment (TEE)</span> to
+            securely process borrower data without exposing sensitive information.
+          </p>
+        </Reveal>
+
+        <Reveal delay={150}>
+          <div className="max-w-6xl mx-auto gradient-border p-[1px]">
+            <div className="bg-card/80 backdrop-blur-xl rounded-[calc(var(--radius)-1px)] p-6 md:p-10">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-2 relative">
+                {flow.map((f, i) => (
+                  <div key={f.title} className="relative">
+                    <div className="rounded-xl bg-secondary/40 border border-border p-4 md:p-5 h-full hover:border-primary-glow/40 hover:-translate-y-1 transition-all text-center">
+                      <div className="h-10 w-10 mx-auto rounded-lg bg-gradient-primary/20 border border-primary-glow/30 flex items-center justify-center mb-2">
+                        <f.icon className="h-5 w-5 text-primary-glow" />
+                      </div>
+                      <p className="font-semibold text-sm">{f.title}</p>
+                      <p className="text-[11px] text-muted-foreground mt-1">{f.desc}</p>
+                    </div>
+                    {i < flow.length - 1 && (
+                      <ArrowRight className="hidden md:block absolute top-1/2 -right-2 -translate-y-1/2 h-4 w-4 text-primary-glow/60 z-10" />
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-3 mt-6">
+                {[
+                  { icon: Lock, title: "Sealed Inputs", desc: "Income & identity never leave the enclave in plaintext." },
+                  { icon: Cpu, title: "Remote Attestation", desc: "Every score ships with a verifiable TEE attestation." },
+                  { icon: ShieldCheck, title: "Zero Leakage", desc: "Operators, validators and AI host see only the result." },
+                ].map((f) => (
+                  <div key={f.title} className="rounded-xl border border-border bg-secondary/30 p-4">
+                    <f.icon className="h-4 w-4 text-primary-glow mb-2" />
+                    <p className="font-semibold text-sm">{f.title}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{f.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  );
+};
+
 const Privacy = () => (
   <section id="privacy" className="py-28 relative overflow-hidden">
     <div className="absolute inset-0 grid-bg opacity-30" />
