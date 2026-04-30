@@ -508,6 +508,10 @@ const Dashboard = ({ score, bonus }: { score: number; bonus: number }) => {
                 </p>
                 <p className="text-xs text-muted-foreground mt-2">/ 100</p>
               </div>
+              <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-primary-glow/30 bg-primary/5 px-2.5 py-1 text-[10px] font-medium">
+                <ShieldCheck className="h-3 w-3 text-primary-glow" />
+                🔒 Processed in TEE · Nox Protocol
+              </div>
               <div className="mt-4">
                 <div className="flex justify-between text-xs mb-1.5">
                   <span className="text-muted-foreground">Reputation Growth</span>
